@@ -65,4 +65,34 @@ router.get('/', protect, checkRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), async (req, 
     }
 });
 
+// @route   DELETE /api/contact/:id
+// @desc    Delete a contact message
+// @access  Private (Admin/Super Admin)
+router.delete('/:id', protect, checkRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), async (req, res) => {
+    try {
+        const contact = await Contact.findById(req.params.id);
+        if (!contact) {
+            return res.status(404).json({ message: 'Message not found' });
+        }
+        await Contact.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Message deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+// @route   POST /api/contact/reply
+// @desc    Reply to a contact message
+// @access  Private (Admin/Super Admin)
+router.post('/reply', protect, checkRole(ROLES.ADMIN, ROLES.SUPER_ADMIN), async (req, res) => {
+    const { email, subject, message } = req.body;
+    try {
+        await sendEmail(email, subject, message, `<p>${message.replace(/\n/g, '<br>')}</p>`);
+        res.json({ message: 'Reply sent successfully' });
+    } catch (error) {
+        console.error("Reply Error:", error);
+        res.status(500).json({ message: 'Failed to send reply' });
+    }
+});
+
 module.exports = router;

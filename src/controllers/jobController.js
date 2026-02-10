@@ -53,6 +53,29 @@ const getMyJobs = async (req, res) => {
     }
 };
 
+// @desc    Update Job
+// @route   PUT /api/jobs/:id
+// @access  Private (HR, Admin)
+const updateJob = async (req, res) => {
+    try {
+        const job = await Job.findById(req.params.id);
+
+        if (!job) {
+            return res.status(404).json({ message: 'Job not found' });
+        }
+
+        // Check if user is owner (HR) or Admin
+        if (req.user.role === 'hr' && job.postedBy.toString() !== req.user.id) {
+            return res.status(401).json({ message: 'Not authorized to update this job' });
+        }
+
+        const updatedJob = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(updatedJob);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
 // @desc    Delete job
 // @route   DELETE /api/jobs/:id
 // @access  Private (Owner/Admin)
@@ -80,5 +103,6 @@ module.exports = {
     createJob,
     getJobs,
     getMyJobs,
+    updateJob,
     deleteJob
 };

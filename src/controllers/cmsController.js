@@ -1,166 +1,236 @@
+const { TeamMember, CoreValue, TimelineEvent, Certification } = require('../models/AboutModels');
+const Setting = require('../models/SiteSetting');
 const Testimonial = require('../models/Testimonial');
 const Partner = require('../models/Partner');
-const SiteSetting = require('../models/SiteSetting');
-const { TeamMember, CoreValue, TimelineEvent, Certification } = require('../models/AboutModels');
-
-// Helper for simple CRUD (to avoid repetitive code)
-const createCRUDFunctions = (Model, name) => ({
-    getAll: async (req, res) => {
-        try {
-            const items = await Model.find({ isActive: true }).sort({ order: 1, createdAt: -1 });
-            res.json(items);
-        } catch (error) {
-            res.status(500).json({ message: 'Server Error' });
-        }
-    },
-    create: async (req, res) => {
-        try {
-            const item = await Model.create(req.body);
-            res.status(201).json(item);
-        } catch (error) {
-            res.status(400).json({ message: 'Invalid data' });
-        }
-    },
-    remove: async (req, res) => {
-        try {
-            await Model.findByIdAndDelete(req.params.id);
-            res.json({ message: `${name} removed` });
-        } catch (error) {
-            res.status(500).json({ message: 'Server Error' });
-        }
-    }
-});
-
-const team = createCRUDFunctions(TeamMember, 'Team Member');
-const values = createCRUDFunctions(CoreValue, 'Core Value');
-const timeline = createCRUDFunctions(TimelineEvent, 'Timeline Event');
-const certs = createCRUDFunctions(Certification, 'Certification');
 
 // --- Testimonials ---
-
-// @desc    Get all testimonials
-// @route   GET /api/cms/testimonials
-// @access  Public
 const getTestimonials = async (req, res) => {
     try {
         const testimonials = await Testimonial.find({ isActive: true }).sort({ createdAt: -1 });
         res.json(testimonials);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
 };
 
-// @desc    Create testimonial
-// @route   POST /api/cms/testimonials
-// @access  Private (Admin)
+const getAdminTestimonials = async (req, res) => {
+    try {
+        const testimonials = await Testimonial.find().sort({ createdAt: -1 });
+        res.json(testimonials);
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+const submitTestimonial = async (req, res) => {
+    try {
+        const { name, role, company, message, rating, image } = req.body;
+        const testimonial = await Testimonial.create({
+            name, role, company, message, rating, image,
+            isActive: false // Default to inactive for moderation
+        });
+        res.status(201).json({ message: 'Testimonial submitted for review', testimonial });
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
+};
+
 const createTestimonial = async (req, res) => {
     try {
         const testimonial = await Testimonial.create(req.body);
         res.status(201).json(testimonial);
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid data', error: error.message });
-    }
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
 };
 
-// @desc    Delete testimonial
-// @route   DELETE /api/cms/testimonials/:id
-// @access  Private (Admin)
+const updateTestimonial = async (req, res) => {
+    try {
+        const testimonial = await Testimonial.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!testimonial) return res.status(404).json({ message: 'Not Found' });
+        res.json(testimonial);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
 const deleteTestimonial = async (req, res) => {
     try {
         await Testimonial.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Testimonial removed' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+        res.json({ message: 'Removed' });
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
 };
 
 // --- Partners ---
-
-// @desc    Get all partners
-// @route   GET /api/cms/partners
-// @access  Public
 const getPartners = async (req, res) => {
     try {
-        const partners = await Partner.find({ isActive: true });
+        const partners = await Partner.find().sort({ order: 1 });
         res.json(partners);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
 };
 
-// @desc    Create partner
-// @route   POST /api/cms/partners
-// @access  Private (Admin)
 const createPartner = async (req, res) => {
     try {
         const partner = await Partner.create(req.body);
         res.status(201).json(partner);
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid data' });
-    }
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
 };
 
-// @desc    Delete partner
-// @route   DELETE /api/cms/partners/:id
-// @access  Private (Admin)
+const updatePartner = async (req, res) => {
+    try {
+        const partner = await Partner.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!partner) return res.status(404).json({ message: 'Not Found' });
+        res.json(partner);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
 const deletePartner = async (req, res) => {
     try {
         await Partner.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Partner removed' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+        res.json({ message: 'Removed' });
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
 };
 
 // --- Settings ---
-
-// @desc    Get all settings
-// @route   GET /api/cms/settings
-// @access  Public (Some might be restricted, but for now Public mainly for frontend config)
 const getSettings = async (req, res) => {
     try {
-        const settings = await SiteSetting.find();
-        const settingsMap = {};
-        settings.forEach(s => settingsMap[s.key] = s.value);
+        const settings = await Setting.find({});
+        const settingsMap = settings.reduce((acc, curr) => {
+            acc[curr.key] = curr.value;
+            return acc;
+        }, {});
         res.json(settingsMap);
-    } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
-    }
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
 };
 
-// @desc    Update/Create setting
-// @route   POST /api/cms/settings
-// @access  Private (Admin)
 const updateSetting = async (req, res) => {
-    const { key, value, group, description } = req.body;
     try {
-        let setting = await SiteSetting.findOne({ key });
-        if (setting) {
-            setting.value = value;
-            if (group) setting.group = group;
-            if (description) setting.description = description;
-            await setting.save();
+        let settings = await Setting.findOne();
+        if (settings) {
+            settings = await Setting.findByIdAndUpdate(settings._id, req.body, { new: true });
         } else {
-            setting = await SiteSetting.create({ key, value, group, description });
+            settings = await Setting.create(req.body);
         }
-        res.json(setting);
-    } catch (error) {
-        res.status(400).json({ message: 'Invalid data' });
-    }
+        res.json(settings);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
+// --- Team ---
+const getTeam = async (req, res) => {
+    try {
+        const team = await TeamMember.find().sort({ order: 1 });
+        res.json(team);
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+const createTeam = async (req, res) => {
+    try {
+        const member = await TeamMember.create(req.body);
+        res.status(201).json(member);
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
+};
+
+const updateTeam = async (req, res) => {
+    try {
+        const member = await TeamMember.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!member) return res.status(404).json({ message: 'Not Found' });
+        res.json(member);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
+const deleteTeam = async (req, res) => {
+    try {
+        await TeamMember.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Removed' });
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+// --- Values ---
+const getValues = async (req, res) => {
+    try {
+        const values = await CoreValue.find().sort({ order: 1 });
+        res.json(values);
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+const createValue = async (req, res) => {
+    try {
+        const value = await CoreValue.create(req.body);
+        res.status(201).json(value);
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
+};
+
+const updateValue = async (req, res) => {
+    try {
+        const value = await CoreValue.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!value) return res.status(404).json({ message: 'Not Found' });
+        res.json(value);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
+const deleteValue = async (req, res) => {
+    try {
+        await CoreValue.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Removed' });
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+// --- Timeline ---
+const getTimeline = async (req, res) => {
+    try {
+        const events = await TimelineEvent.find().sort({ year: 1 });
+        res.json(events);
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+const createTimeline = async (req, res) => {
+    try {
+        const event = await TimelineEvent.create(req.body);
+        res.status(201).json(event);
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
+};
+
+const updateTimeline = async (req, res) => {
+    try {
+        const event = await TimelineEvent.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!event) return res.status(404).json({ message: 'Not Found' });
+        res.json(event);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
+const deleteTimeline = async (req, res) => {
+    try {
+        await TimelineEvent.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Removed' });
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+// --- Certs ---
+const getCerts = async (req, res) => {
+    try {
+        const certs = await Certification.find().sort({ date: -1 });
+        res.json(certs);
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
+};
+
+const createCert = async (req, res) => {
+    try {
+        const cert = await Certification.create(req.body);
+        res.status(201).json(cert);
+    } catch (error) { res.status(400).json({ message: 'Invalid Data' }); }
+};
+
+const updateCert = async (req, res) => {
+    try {
+        const cert = await Certification.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!cert) return res.status(404).json({ message: 'Not Found' });
+        res.json(cert);
+    } catch (error) { res.status(400).json({ message: 'Update Failed' }); }
+};
+
+const deleteCert = async (req, res) => {
+    try {
+        await Certification.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Removed' });
+    } catch (error) { res.status(500).json({ message: 'Server Error' }); }
 };
 
 module.exports = {
-    getTestimonials,
-    createTestimonial,
-    deleteTestimonial,
-    getPartners,
-    createPartner,
-    deletePartner,
-    getSettings,
-    updateSetting,
-    // About Section
-    getTeam: team.getAll, createTeam: team.create, deleteTeam: team.remove,
-    getValues: values.getAll, createValue: values.create, deleteValue: values.remove,
-    getTimeline: timeline.getAll, createTimeline: timeline.create, deleteTimeline: timeline.remove,
-    getCerts: certs.getAll, createCert: certs.create, deleteCert: certs.remove
+    getTestimonials, getAdminTestimonials, submitTestimonial, createTestimonial, updateTestimonial, deleteTestimonial,
+    getPartners, createPartner, updatePartner, deletePartner,
+    getSettings, updateSetting,
+    getTeam, createTeam, updateTeam, deleteTeam,
+    getValues, createValue, updateValue, deleteValue,
+    getTimeline, createTimeline, updateTimeline, deleteTimeline,
+    getCerts, createCert, updateCert, deleteCert
 };
