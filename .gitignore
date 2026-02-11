@@ -32,3 +32,6 @@ yarn-error.log*
 .vercel
 *.tsbuildinfo
 next-env.d.ts
+
+# Temp uploads (for debugging)
+temp/

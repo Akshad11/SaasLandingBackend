@@ -91,4 +91,104 @@ router.put('/:id', protect, checkRole(ROLES.SUPER_ADMIN), async (req, res) => {
     }
 });
 
+// @desc    Get current user's theme preference
+// @route   GET /api/users/me/theme
+// @access  Private (All authenticated users)
+router.get('/me/theme', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('theme');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            theme: user.theme || 'light'
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server Error'
+        });
+    }
+});
+
+// @desc    Update current user's theme preference
+// @route   PUT /api/users/me/theme
+// @access  Private (All authenticated users)
+router.put('/me/theme', protect, async (req, res) => {
+    try {
+        const { theme } = req.body;
+
+        // Validate theme value
+        if (!theme || !['light', 'dark'].includes(theme)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid theme. Must be "light" or "dark"'
+            });
+        }
+
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        user.theme = theme;
+        await user.save();
+
+        res.json({
+            success: true,
+            message: 'Theme updated successfully',
+            theme: user.theme
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server Error',
+            error: error.message
+        });
+    }
+});
+
+// @desc    Get current user profile (including theme)
+// @route   GET /api/users/me
+// @access  Private (All authenticated users)
+router.get('/me', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id).select('-password -otp -otpExpires');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            user: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                theme: user.theme || 'light',
+                createdAt: user.createdAt
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Server Error'
+        });
+    }
+});
+
 module.exports = router;

@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "dev": "nodemon src/server.js",
+    "seed": "node scripts/seedUsers.js",
+    "verify-users": "node scripts/verifyUsers.js"
   },
   "keywords": [],
   "author": "",

@@ -6,7 +6,7 @@ const { ROLES } = require('../config/permissions');
 // @access  Private (HR, Admin)
 const createJob = async (req, res) => {
     try {
-        const { title, slug, department, type, location, description, responsibilities, requirements } = req.body;
+        const { title, slug, department, type, location, description, responsibilities, requirements, WorkMode } = req.body;
 
         const job = await Job.create({
             title,
@@ -16,6 +16,7 @@ const createJob = async (req, res) => {
             location,
             description,
             responsibilities,
+            WorkMode,
             requirements,
             postedBy: req.user.id
         });
