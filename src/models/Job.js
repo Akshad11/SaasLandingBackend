@@ -20,8 +20,12 @@ const jobSchema = new mongoose.Schema({
         type: String, // Full-time, Part-time, Contract
         required: true
     },
-    location: {
+    WorkMode: {
         type: String, // Remote, Hybrid, On-site
+        required: true
+    },
+    location: {
+        type: String,
         required: true
     },
     description: {

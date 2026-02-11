@@ -29,6 +29,11 @@ const userSchema = new mongoose.Schema({
     otpExpires: {
         type: Date
     },
+    theme: {
+        type: String,
+        enum: ['light', 'dark'],
+        default: 'light'
+    },
     createdAt: {
         type: Date,
         default: Date.now
