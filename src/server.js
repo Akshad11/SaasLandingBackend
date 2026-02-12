@@ -13,11 +13,38 @@ if (!process.env.JWT_SECRET) console.error('FATAL: JWT_SECRET is missing!');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// CORS Configuration - Allow multiple origins
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'https://frontend-7xdc-git-main-aarvionservices-projects.vercel.app',
+    process.env.CLIENT_URL
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps, Postman, or same-origin)
+        if (!origin) return callback(null, true);
+
+        // Check if origin is in allowed list
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        // Allow any Vercel preview URLs for aarvionservices
+        if (origin.includes('aarvionservices') && origin.includes('vercel.app')) {
+            return callback(null, true);
+        }
+
+        // Reject other origins
+        const msg = `The CORS policy for this site does not allow access from origin ${origin}`;
+        return callback(new Error(msg), false);
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 86400 // 24 hours
 }));
 app.use(express.json());
 
