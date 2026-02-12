@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://frontend-7xdc-git-main-aarvionservices-projects.vercel.app',
+    'https://frontend-eight-ruddy-22.vercel.app',
     process.env.CLIENT_URL
 ].filter(Boolean); // Remove undefined values
 
@@ -80,13 +80,13 @@ async function startServer() {
     );
 
     // REST Routes
-    app.use('/api/auth', require('./routes/auth.routes'));
-    app.use('/api/users', require('./routes/user.routes')); // New
-    app.use('/api/contact', require('./routes/contact.routes'));
-    app.use('/api/upload', require('./routes/upload.routes'));
-    app.use('/api/jobs', require('./routes/job.routes'));
-    app.use('/api/cms', require('./routes/cms.routes'));
-    app.use('/api/admin', require('./routes/admin.routes')); // New Admin Routes
+    app.use('api/auth', require('./routes/auth.routes'));
+    app.use('api/users', require('./routes/user.routes')); // New
+    app.use('api/contact', require('./routes/contact.routes'));
+    app.use('api/upload', require('./routes/upload.routes'));
+    app.use('api/jobs', require('./routes/job.routes'));
+    app.use('api/cms', require('./routes/cms.routes'));
+    app.use('api/admin', require('./routes/admin.routes')); // New Admin Routes
 
     // Health Check Route
     app.get('/api/health', (req, res) => {
