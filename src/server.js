@@ -80,13 +80,13 @@ async function startServer() {
     );
 
     // REST Routes
-    app.use('api/auth', require('./routes/auth.routes'));
-    app.use('api/users', require('./routes/user.routes')); // New
-    app.use('api/contact', require('./routes/contact.routes'));
-    app.use('api/upload', require('./routes/upload.routes'));
-    app.use('api/jobs', require('./routes/job.routes'));
-    app.use('api/cms', require('./routes/cms.routes'));
-    app.use('api/admin', require('./routes/admin.routes')); // New Admin Routes
+    app.use('/api/auth', require('./routes/auth.routes'));
+    app.use('/api/users', require('./routes/user.routes'));
+    app.use('/api/contact', require('./routes/contact.routes'));
+    app.use('/api/upload', require('./routes/upload.routes'));
+    app.use('/api/jobs', require('./routes/job.routes'));
+    app.use('/api/cms', require('./routes/cms.routes'));
+    app.use('/api/admin', require('./routes/admin.routes'));
 
     // Health Check Route
     app.get('/api/health', (req, res) => {
